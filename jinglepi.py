@@ -8,12 +8,18 @@ import uvicorn
 app = FastAPI()
 
 #matrix size
-colums = 10
-rows = 10
+columns = 16
+rows = 50
 
 matrix = [[0 for _ in range(colums)] for _ in range(rows)]
 # Shared variable for LED color
 current_led_color = "#000000"  # Default color
+
+# Helper function to update a specific cell in the matrix
+def update_matrix(x: int, y: int, value: int):
+    global matrix
+    if 0 <= x < rows and 0 <= y < columns:
+        matrix[x][y] = value
 
 # Simulate LED update (replace this with your actual LED logic)
 def update_led_color(color: str):
