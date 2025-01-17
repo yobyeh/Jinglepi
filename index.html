@@ -1,8 +1,72 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>LED Color Control</title>
+        <title>Jingle Pi Control</title>
         <style>
+             /* Layout for the entire page */
+            body {
+            display: flex;
+            flex-direction: column; /* Stack header and main sections vertically */
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            height: 100vh; /* Full viewport height */
+            }
+
+             /* Header section */
+            .header {
+            width: 100%; /* Ensure the header spans the full width */
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            padding: 20px;
+            font-size: 24px;
+            font-weight: bold;
+            box-sizing: border-box;
+            }
+
+            .main {
+            display: flex;
+            flex: 1; /* Take up remaining space below the header */
+            flex-direction: row; /* Arrange columns side by side */
+            }
+
+            /* Left section: Buttons and settings */
+            .left-panel {
+            flex: 1; /* Takes available space on the left */
+            padding: 20px;
+            background-color: #f4f4f4;
+            border-right: 2px solid #ddd;
+            }
+
+            .left-panel h1 {
+            margin-bottom: 20px;
+            }
+
+            .left-panel button {
+            display: block;
+            margin-bottom: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            }
+
+            .left-panel input[type="color"] {
+            margin-top: 20px;
+            display: block;
+            width: 100px;
+            height: 40px;
+            cursor: pointer;
+            }
+
+            /* Right section: Grid */
+            .right-panel {
+            flex: 3; /* Takes available space on the right */
+            padding: 20px;
+            display: flex;
+            justify-content: flex-end; /* Align grid to the right */
+            }
+
             /* Style for the grid container */
             .grid {
                 display: grid;
@@ -13,6 +77,7 @@
                 margin: 20px auto;
                 justify-content: center;
             }
+
             /* Style for each square */
             .square {
                 width: 10px;
@@ -24,9 +89,29 @@
         </style>
     </head>
     <body>
-        <h1>LED Color Controller</h1>
-        <input type="color" id="colorPicker" value="#ff0000" style="width:100%; height:100px;"/>
-        <div class="grid" id="grid"></div> <!-- Grid container -->
+
+        <!-- Header section -->
+        <div class="header">
+            Jingle Pi Control
+        </div>
+
+        <!-- Main content -->
+        <div class="main">
+            <!-- Left panel for buttons and settings -->
+            <div class="left-panel">
+                <h2>Settings</h2>
+                <button id="resetButton">Reset</button>
+                <button id="applyButton">Apply</button>
+                <input type="color" id="colorPicker" value="#ff0000" />
+            </div>
+
+            <!-- Right panel for the grid -->
+            <div class="right-panel">
+                <div class="grid" id="grid"></div>
+            </div>
+        </div>
+
+
         <script>
             const ws = new WebSocket("ws://192.168.1.17:8000/ws");
 
