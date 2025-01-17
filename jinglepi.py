@@ -17,8 +17,9 @@ current_led_color = "#000000"  # Default color
 
 # Simulate LED update (replace this with your actual LED logic)
 def update_led_color(color: str):
-    print(f"LED Color updated to: {color}")
-    # Here, add the logic to change your LEDs to the given color
+    global current_led_color
+    current_led_color = color  # Update the shared variable
+    print(f"LED color updated to: {current_led_color}")  # Debug: Log the updated color
 
 
 @app.get("/")
@@ -34,11 +35,16 @@ async def get():
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
+    print("WebSocket connection established")
     try:
         while True:
             # Receive color data from the website
             data = await websocket.receive_text()
+            print(f"Received data from WebSocket: {data}")  # Debug: Log received data
             update_led_color(data)
+
+            # update site
+            await websocket.send_text(current_led_color)
     except Exception as e:
         print(f"WebSocket disconnected: {e}")
 
@@ -46,7 +52,7 @@ async def main_loop():
     global current_led_color  # Access the shared variable
     while True:
         # Read and use the current LED color
-        print(f"Main Loop: Current LED color is {current_led_color}")
+        #print(f"Main Loop: Current LED color is {current_led_color}")
         # Simulate some processing
         await asyncio.sleep(1)
 

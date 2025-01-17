@@ -2,18 +2,36 @@
 <html>
     <head>
         <title>LED Color Control</title>
+        <style>
+            /* Style for the color square */
+            #colorDisplay {
+                width: 100px;
+                height: 100px;
+                margin: 20px auto;
+                border: 2px solid #000;
+                background-color: #000000; /* Default color */
+            }
+        </style>
     </head>
     <body>
         <h1>LED Color Controller</h1>
         <input type="color" id="colorPicker" value="#ff0000" style="width:100%; height:100px;"/>
+        <div id="colorDisplay"></div>
         <script>
-            const ws = new WebSocket("ws://localhost:8000/ws");
+            const ws = new WebSocket("ws://192.168.1.17:8000/ws");
 
             // Send color to the WebSocket when the color picker changes
             document.getElementById("colorPicker").addEventListener("input", (event) => {
                 const color = event.target.value;
                 ws.send(color);
             });
+
+            // Update the color square with the current LED color
+            ws.onmessage = (event) => {
+            const color = event.data; // Get the color from the server
+            const colorDisplay = document.getElementById("colorDisplay");
+            colorDisplay.style.backgroundColor = color; // Update the square's color
+            };
 
             ws.onopen = () => {
                 console.log("WebSocket connection established");
