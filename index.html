@@ -149,15 +149,35 @@
 
              // Handle WebSocket messages to update grid colors
             ws.onmessage = (event) => {
-                const matrix = JSON.parse(event.data);
-                const rows = document.getElementsByClassName("row");
+                try {
+                    const matrix = JSON.parse(event.data);
+                    console.log("Received matrix:", matrix);
 
-                for (let row = 0; row < matrix.length; row++) {
-                    const squares = rows[row].children;
-                    for (let col = 0; col < matrix[row].length; col++) {
-                        const color = matrix[row][col] === 0 ? "#000" : "#fff";
-                        squares[col].style.backgroundColor = color;
+                    const rows = document.getElementsByClassName("row");
+                    if (rows.length !== matrix.length) {
+                        throw new Error(`Grid row count (${rows.length}) does not match matrix row count (${matrix.length}).`);
                     }
+
+                    for (let row = 0; row < matrix.length; row++) {
+                        const squares = rows[row]?.children;
+
+
+
+                        if (!squares || squares.length !== matrix[row].length) {
+                            console.error(`Row ${row} column count mismatch.`);
+                            continue;
+                        }
+
+                        for (let col = 0; col < matrix[row].length; col++) {
+                            const value = matrix[row][col];
+                            //const color = value === 0 ? "#000" : "#fff"; // Map value to color
+                            //console.log(`Row ${row}, Col ${col}, Square:`, squares[col]);
+                            console.log(`Setting Row ${row}, Col ${col} to ${value}`);
+                            squares[col].style.backgroundColor = value;
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error updating grid:", error.message);
                 }
             };
 
