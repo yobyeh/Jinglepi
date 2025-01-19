@@ -35,7 +35,11 @@
             .left-panel {
             flex: 1; /* Takes available space on the left */
             padding: 20px;
-            background-color: #f4f4f4;
+            background-image: url('/web-control/assets/circuit-bg.jpg'); /* Path to the image */
+            background-size: cover; /* Ensure the image covers the entire window */
+            background-repeat: no-repeat; /* Prevent tiling */
+            background-attachment: fixed; /* Make the background stay fixed during scrolling */
+            background-position: center; /* Center the background image */
             border-right: 2px solid #ddd;
             }
 
@@ -64,7 +68,7 @@
             flex: 3; /* Takes available space on the right */
             padding: 20px;
             display: flex;
-            justify-content: flex-end; /* Align grid to the right */
+            /*justify-content: flex-end;  Align grid to the right */
             }
 
             /* Style for the grid container */
@@ -98,13 +102,19 @@
             Jingle Pi Control
         </div>
 
+        <header>
+            <nav>
+                <a href="index.html">Simulation</a>
+            </nav>
+        </header>
+
         <!-- Main content -->
         <div class="main">
             <!-- Left panel for buttons and settings -->
             <div class="left-panel">
-                <h2>Settings</h2>
-                <button id="resetButton">Reset</button>
-                <button id="applyButton">Apply</button>
+                <h2>Options</h2>
+                <button id="test1Button">Test 1</button>
+                <button id="stopButton">Stop</button>
                 <input type="color" id="colorPicker" value="#ff0000" />
             </div>
 
@@ -181,15 +191,26 @@
                 }
             };
 
-            ws.onopen = () => {
-                console.log("WebSocket connection established");
-            };
+            // Attach click events to buttons
+            document.querySelector("#test1Button").addEventListener("click", () => {
+                ws.send(JSON.stringify({ button: "test1Button" }));
+            });
+
+            document.querySelector("#stopButton").addEventListener("click", () => {
+                ws.send(JSON.stringify({ button: "stopButton" }));
+            });
 
             // Send color to the WebSocket when the color picker changes
             document.getElementById("colorPicker").addEventListener("input", (event) => {
                 const color = event.target.value;
                 ws.send(color);
             });
+
+            ws.onopen = () => {
+                console.log("WebSocket connection established");
+            };
+
+           
 
             ws.onclose = () => {
                 console.log("WebSocket connection closed");
