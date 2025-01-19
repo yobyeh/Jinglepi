@@ -6,6 +6,8 @@ import html
 import uvicorn
 import json
 
+app = FastAPI()
+app.mount("/web-control/assets", StaticFiles(directory="web-control/assets"), name="assets")
 
 #read html
 @app.get("/")
