@@ -17,24 +17,27 @@ import json
 #matrix size
 columns = 16
 rows = 50
+pixels = 800
 
 lock = threading.Lock()
 #shared variables
 #with lock used for editing shared variables
+# Shared variable for LED color
+color_picked = "#000000"  # Default color
 
 #frame logic
 frame_loaded = 0
 frame_sent_web = 0
 frame_sent_led = 0
 running = 0
+frame_number = 0
 
 #server
 # Define command queue globally
-command_queue = queue.Queue()
-
+command_queue = queue.Queue()#create matrix
 matrix = [[0 for _ in range(columns)] for _ in range(rows)]
-# Shared variable for LED color
-color_picked = "#000000"  # Default color
+
+
 
 # Helper function to update a specific cell in the matrix
 def update_Matrix(x: int, y: int, value: int):
@@ -42,11 +45,28 @@ def update_Matrix(x: int, y: int, value: int):
     if 0 <= x < rows and 0 <= y < columns:
         matrix[x][y] = value
 
+def run_frame():
+    colorWipe()
+        
+def reset_frame_check():
+    global frame_number
+    if frame_number == 800:
+        frame_number = 0
+
+
 def solid_color_matrix(color: str):
     for x in range(columns):
         for y in range(rows):
             update_Matrix(y, x, color_picked)
 
+def colorWipe():
+    """Wipe color across display a pixel at a time."""
+    for i in range(pixels):
+        for j in range(columns):
+            for k in range(rowsf):
+                update_Matrix(x, y, color_picked)
+                matrix_to_site(matrix)
+                
 
 #simulate LED update
 def update_color_picked(color: str):
@@ -74,14 +94,17 @@ async def process_commands():
 
 async def main_loop():
     global current_led_color  # Access the shared variable
+    global frame_number
     while True:
        
         print("main loop running")
 
-        #server commands
-        process_commands()
+        #run frame
+        #run_frame()
+        #reset_frame_check()
 
-        #simulate some processing
+
+        # Simulate some processing
         await asyncio.sleep(5)
 
 if __name__ == "__main__":
