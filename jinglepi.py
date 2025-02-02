@@ -1,4 +1,5 @@
 import threading
+import queue
 from fastapi import FastAPI, WebSocket
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
@@ -9,6 +10,9 @@ import uvicorn
 import json
 
 #hardcoded matrix size
+#data lock all shared files
+#create matrix function
+#persistant settings file between launches
 
 #matrix size
 columns = 16
@@ -24,7 +28,9 @@ frame_sent_web = 0
 frame_sent_led = 0
 running = 0
 
-
+#server
+# Define command queue globally
+command_queue = queue.Queue()
 
 matrix = [[0 for _ in range(columns)] for _ in range(rows)]
 # Shared variable for LED color
@@ -57,20 +63,32 @@ def handle_stop_button():
     global running
     running = 0
 
+async def process_commands():
+    while True:
+        try:
+            command = command_queue.get(block=False)  # Non-blocking get
+            if command == "handle_test1_button":
+                handle_test1_button()  # Call the function in the main thread
+        except queue.Empty:
+            pass  # No new commands
+
 async def main_loop():
     global current_led_color  # Access the shared variable
     while True:
        
         print("main loop running")
 
-        # Simulate some processing
+        #server commands
+        process_commands()
+
+        #simulate some processing
         await asyncio.sleep(5)
 
 if __name__ == "__main__":
     async def main():
 
         # Start the web server in a separate thread
-        web_server_thread = threading.Thread(target=start_web_server, daemon=True)
+        web_server_thread = threading.Thread(target=start_web_server,args=(command_queue,), daemon=True)
         web_server_thread.start()
 
         # Start the main loop as a background task
