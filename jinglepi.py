@@ -86,6 +86,16 @@ def handle_stop_button():
     global running
     running = 0
 
+async def send_websocket_message(data):
+    """ Send data to the web server via WebSocket. """
+    try:
+        async with websockets.connect("ws://localhost:8000/ws") as websocket:
+            await websocket.send(json.dumps(data))
+            response = await websocket.recv()
+            print("WebSocket Response:", response)
+    except Exception as e:
+        print(f"WebSocket error: {e}")
+
 async def process_commands():
     while True:
         try:

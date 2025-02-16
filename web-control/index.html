@@ -130,11 +130,25 @@
         <script>
             const ws = new WebSocket("ws://192.168.1.17:8000/ws");
 
+            ws.onopen = () => {
+                console.log("WebSocket connection established");
+            };
+
+            // ✅ Ensure messages are only sent when the WebSocket is OPEN
+            function sendMessage(message) {
+                if (ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify(message));
+                } else {
+                    console.warn("WebSocket not ready. Retrying in 100ms...");
+                    setTimeout(() => sendMessage(message), 100);
+                }
+            }
+
             // Send color to the WebSocket when the color picker changes
-            document.getElementById("colorPicker").addEventListener("input", (event) => {
-                const color = event.target.value;
-                ws.send(color);
-            });
+            //document.getElementById("colorPicker").addEventListener("input", (event) => {
+                //const color = event.target.value;
+                //ws.send(color);
+            //});
 
             // Create the grid dynamically
             const gridContainer = document.getElementById("grid");
@@ -159,7 +173,7 @@
                 gridContainer.appendChild(rowContainer);
             }
 
-             // Handle WebSocket messages to update grid colors
+            // ✅ Handle WebSocket Messages for Grid Updates
             ws.onmessage = (event) => {
                 try {
                     const matrix = JSON.parse(event.data);
@@ -172,9 +186,6 @@
 
                     for (let row = 0; row < matrix.length; row++) {
                         const squares = rows[row]?.children;
-
-
-
                         if (!squares || squares.length !== matrix[row].length) {
                             console.error(`Row ${row} column count mismatch.`);
                             continue;
@@ -182,10 +193,7 @@
 
                         for (let col = 0; col < matrix[row].length; col++) {
                             const value = matrix[row][col];
-                            //const color = value === 0 ? "#000" : "#fff"; // Map value to color
-                            //console.log(`Row ${row}, Col ${col}, Square:`, squares[col]);
-                            console.log(`Setting Row ${row}, Col ${col} to ${value}`);
-                            squares[col].style.backgroundColor = value;
+                            squares[col].style.backgroundColor = value;  // ✅ Update square color
                         }
                     }
                 } catch (error) {
@@ -193,25 +201,32 @@
                 }
             };
 
-            // buttons
-            document.addEventListener("click", function(event) {
+            // ✅ Send Button Clicks via WebSocket
+            document.addEventListener("click", (event) => {
                 let button = event.target;
                 if (button.tagName === "BUTTON") {
                     let buttonId = button.id;
                     console.log("Button clicked:", buttonId);
-
-                // Send button press via WebSocket
-                ws.send(JSON.stringify({ button: buttonId }));
-            }
-        });
-
-
+                    sendMessage({ button: buttonId });  // ✅ Send button event safely
+                }
+            });
 
             // Send color to the WebSocket when the color picker changes
             document.getElementById("colorPicker").addEventListener("input", (event) => {
                 const color = event.target.value;
                 ws.send(color);
             });
+
+            // ✅ Handle Color Picker Changes
+            document.getElementById("colorPicker").addEventListener("input", (event) => {
+                const color = event.target.value;
+                console.log("Color changed:", color);
+                sendMessage({ color: color });  // ✅ Send color update safely
+            });
+
+            ws.onmessage = (event) => {
+                console.log("Message from server:", event.data);
+            };
 
             ws.onopen = () => {
                 console.log("WebSocket connection established");

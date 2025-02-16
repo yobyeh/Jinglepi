@@ -58,28 +58,28 @@ async def websocket_endpoint(websocket: WebSocket):
             message = await websocket.receive_text()
             data = json.loads(message)
 
+            # ✅ Handle button presses
             if "button" in data:
                 button_id = data["button"]
                 print(f"Button pressed: {button_id}")
 
                 if command_queue:
-                    command_queue.put(button_id)  # ✅ Add to queue instead of calling function
+                    command_queue.put(button_id)  # ✅ Add button command to queue
                     await websocket.send_json({"message": f"Button {button_id} added to queue"})
                 else:
                     await websocket.send_json({"error": "Command queue not available"})
 
-            await asyncio.sleep(0.1)  # Prevents busy-waiting
+            # ✅ Handle matrix updates
+            elif "matrix" in data:
+                global matrix
+                with lock:
+                    matrix = data["matrix"]  # ✅ Store updated matrix
+                print("Matrix updated via WebSocket")
+                await websocket.send_json({"message": "Matrix received"})
+
+            await asyncio.sleep(0.1)  # ✅ Prevents busy-waiting
     except Exception as e:
         print(f"WebSocket disconnected: {e}")
-
-
-@app.post("/update_matrix")
-async def update_matrix(request: dict):
-    """ Endpoint to receive the latest matrix from the main thread """
-    global matrix
-    with lock:
-        matrix = request["matrix"]
-    return {"message": "Matrix updated successfully"}
 
 async def process_commands():
     while True:
@@ -95,19 +95,11 @@ async def process_commands():
         except queue.Empty:
             await asyncio.sleep(0.1)  # ✅ Prevents high CPU usage
 
-async def send_matrix_to_clients():
-    """ Send the current matrix to all connected WebSocket clients """
-    global matrix
-    with lock:
-        if matrix is not None:
-            message = {"matrix": matrix}
-            print("Sending updated matrix to clients:", message)
-            # Here, you would implement WebSocket broadcasting logic if needed
 
-def start_web_server(queue_ref):
+def start_web_server(queue_ref): 
     global command_queue
     command_queue = queue_ref  # Assign queue reference
-    matrix = matrix_ref  # ✅ Assign shared matrix
+    #matrix = matrix_ref  # ✅ Assign shared matrix
 
     # Start the FastAPI server
     config = uvicorn.Config(app, host="0.0.0.0", port=8000, log_level="info")
