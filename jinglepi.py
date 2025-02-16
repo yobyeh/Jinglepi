@@ -41,9 +41,12 @@ matrix = [[0 for _ in range(columns)] for _ in range(rows)]
 
 # Helper function to update a specific cell in the matrix
 def update_Matrix(x: int, y: int, value: int):
+    """ Update a specific matrix cell """
     global matrix
     if 0 <= x < rows and 0 <= y < columns:
-        matrix[x][y] = value
+        with lock:
+            matrix[x][y] = value
+
 
 def run_frame():
     colorWipe()
