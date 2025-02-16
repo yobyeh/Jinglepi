@@ -193,14 +193,19 @@
                 }
             };
 
-            // Attach click events to buttons
-            document.querySelector("#test1Button").addEventListener("click", () => {
-                ws.send(JSON.stringify({ button: "test1Button" }));
-            });
+            // buttons
+            document.addEventListener("click", function(event) {
+                let button = event.target;
+                if (button.tagName === "BUTTON") {
+                    let buttonId = button.id;
+                    console.log("Button clicked:", buttonId);
 
-            document.querySelector("#stopButton").addEventListener("click", () => {
-                ws.send(JSON.stringify({ button: "stopButton" }));
-            });
+                // Send button press via WebSocket
+                ws.send(JSON.stringify({ button: buttonId }));
+            }
+        });
+
+
 
             // Send color to the WebSocket when the color picker changes
             document.getElementById("colorPicker").addEventListener("input", (event) => {

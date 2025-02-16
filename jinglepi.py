@@ -76,10 +76,10 @@ def update_color_picked(color: str):
 
 #run matrix test animation
 def handle_test1_button():
-    print("test button 1")
+    print("test button 1 main file")
 
 def handle_stop_button():
-    print("stop button")
+    print("stop button in main file")
     global running
     running = 0
 
@@ -87,10 +87,22 @@ async def process_commands():
     while True:
         try:
             command = command_queue.get(block=False)  # Non-blocking get
-            if command == "handle_test1_button":
-                handle_test1_button()  # Call the function in the main thread
+            print(f"Processing command: {command}")
+
+            button_actions = {
+                "test1Button": handle_test1_button,
+                "stopButton": handle_stop_button,
+                #"colorButton": change_led_color,
+                #"resetButton": reset_leds,
+            }
+
+            if command in button_actions:
+                await asyncio.to_thread(button_actions[command])  # ✅ Runs in the main thread
+            else:
+                print(f"Unknown command: {command}")
+
         except queue.Empty:
-            pass  # No new commands
+            await asyncio.sleep(0.1)  # ✅ Prevents high CPU usage
 
 async def main_loop():
     global current_led_color  # Access the shared variable
@@ -98,7 +110,6 @@ async def main_loop():
     while True:
        
         print("main loop running")
-
         #run frame
         #run_frame()
         #reset_frame_check()
@@ -113,6 +124,9 @@ if __name__ == "__main__":
         # Start the web server in a separate thread
         web_server_thread = threading.Thread(target=start_web_server,args=(command_queue,), daemon=True)
         web_server_thread.start()
+
+        # Start processing commands in the main thread
+        asyncio.create_task(process_commands())
 
         # Start the main loop as a background task
         await asyncio.create_task(main_loop())
