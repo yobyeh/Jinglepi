@@ -128,27 +128,9 @@
 
 
         <script>
-            const ws = new WebSocket("ws://192.168.1.17:8000/ws");
-
-            ws.onopen = () => {
-                console.log("WebSocket connection established");
-            };
-
-            // ✅ Ensure messages are only sent when the WebSocket is OPEN
-            function sendMessage(message) {
-                if (ws.readyState === WebSocket.OPEN) {
-                    ws.send(JSON.stringify(message));
-                } else {
-                    console.warn("WebSocket not ready. Retrying in 100ms...");
-                    setTimeout(() => sendMessage(message), 100);
-                }
-            }
-
-            // Send color to the WebSocket when the color picker changes
-            //document.getElementById("colorPicker").addEventListener("input", (event) => {
-                //const color = event.target.value;
-                //ws.send(color);
-            //});
+            let ws;
+            let reconnectAttempts = 0;
+            const maxReconnects = 5; // Limit reconnect attempts
 
             // Create the grid dynamically
             const gridContainer = document.getElementById("grid");
@@ -173,13 +155,80 @@
                 gridContainer.appendChild(rowContainer);
             }
 
-            // ✅ Handle WebSocket Messages for Grid Updates
-            ws.onmessage = (event) => {
-                try {
-                    const matrix = JSON.parse(event.data);
-                    console.log("Received matrix:", matrix);
+            function connectWebSocket() {
+                if (reconnectAttempts >= maxReconnects) {
+                    console.error("WebSocket failed to reconnect after multiple attempts.");
+                    return;
+                }
 
+                const wsProtocol = window.location.protocol === "https:" ? "wss://" : "ws://";
+                const wsHost = window.location.hostname + ":8000";  // Auto-detect host
+                ws = new WebSocket(wsProtocol + wsHost + "/ws");
+
+                ws.onopen = () => {
+                    console.log("WebSocket connection established");
+                };
+
+                // ✅ Handle WebSocket Messages for Grid Updates
+                ws.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        console.log("📩 Received data:", data);
+
+                        // ✅ Check if the received data contains a valid matrix
+                        if (data.matrix) {
+                            console.log("✅ Matrix received, updating grid...");
+                            updateGrid(data.matrix);
+                        } else {
+                            console.log("ℹ️ Received a message from the server:", data.message);
+                        }
+                    } catch (error) {
+                        console.error("❌ Error processing WebSocket message:", error.message);
+                    }
+                };
+
+                ws.onclose = () => {
+                    console.warn("WebSocket disconnected. Retrying in 3 seconds...");
+                    reconnectAttempts++;
+                    setTimeout(connectWebSocket, 3000);  // Reconnect after 3 seconds
+                };
+
+                ws.onerror = (error) => {
+                    console.error("WebSocket error:", error);
+                    reconnectAttempts++;
+                    setTimeout(connectWebSocket, 3000);
+                };
+            };
+
+            connectWebSocket();
+            
+            // ✅ Safe Message Sending (Only Retries for a Limited Time)
+            function sendMessage(message, retries = 5) {
+                if (ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify(message));
+                } else if (retries > 0) {
+                    console.warn("WebSocket not ready. Retrying in 500ms...");
+                    setTimeout(() => sendMessage(message, retries - 1), 500);
+                } else {
+                    console.error("Failed to send message: WebSocket is not connected.");
+                }
+            }
+        
+            // ✅ Handle Button Clicks
+            document.addEventListener("click", (event) => {
+                let button = event.target;
+                if (button.tagName === "BUTTON") {
+                    let buttonId = button.id;
+                    console.log("Button clicked:", buttonId);
+                    sendMessage({ button: buttonId });
+                }
+            });
+
+            // ✅ Function to update the grid only when a valid matrix is received
+            function updateGrid(matrix) {
+                try {
                     const rows = document.getElementsByClassName("row");
+
                     if (rows.length !== matrix.length) {
                         throw new Error(`Grid row count (${rows.length}) does not match matrix row count (${matrix.length}).`);
                     }
@@ -187,56 +236,20 @@
                     for (let row = 0; row < matrix.length; row++) {
                         const squares = rows[row]?.children;
                         if (!squares || squares.length !== matrix[row].length) {
-                            console.error(`Row ${row} column count mismatch.`);
+                            console.error(`⚠️ Row ${row} column count mismatch.`);
                             continue;
                         }
 
                         for (let col = 0; col < matrix[row].length; col++) {
                             const value = matrix[row][col];
-                            squares[col].style.backgroundColor = value;  // ✅ Update square color
+                            squares[col].style.backgroundColor = value; // ✅ Update square color
                         }
                     }
                 } catch (error) {
-                    console.error("Error updating grid:", error.message);
+                    console.error("❌ Error updating grid:", error.message);
                 }
-            };
+            }
 
-            // ✅ Send Button Clicks via WebSocket
-            document.addEventListener("click", (event) => {
-                let button = event.target;
-                if (button.tagName === "BUTTON") {
-                    let buttonId = button.id;
-                    console.log("Button clicked:", buttonId);
-                    sendMessage({ button: buttonId });  // ✅ Send button event safely
-                }
-            });
-
-            // Send color to the WebSocket when the color picker changes
-            document.getElementById("colorPicker").addEventListener("input", (event) => {
-                const color = event.target.value;
-                ws.send(color);
-            });
-
-            // ✅ Handle Color Picker Changes
-            document.getElementById("colorPicker").addEventListener("input", (event) => {
-                const color = event.target.value;
-                console.log("Color changed:", color);
-                sendMessage({ color: color });  // ✅ Send color update safely
-            });
-
-            ws.onmessage = (event) => {
-                console.log("Message from server:", event.data);
-            };
-
-            ws.onopen = () => {
-                console.log("WebSocket connection established");
-            };
-
-           
-
-            ws.onclose = () => {
-                console.log("WebSocket connection closed");
-            };
         </script>
     </body>
 </html>

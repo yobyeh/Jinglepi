@@ -78,8 +78,12 @@ async def websocket_endpoint(websocket: WebSocket):
                 await websocket.send_json({"message": "Matrix received"})
 
             await asyncio.sleep(0.1)  # ✅ Prevents busy-waiting
+            
     except Exception as e:
-        print(f"WebSocket disconnected: {e}")
+        print(f"WebSocket error: {e}")
+
+    finally:
+        print("WebSocket connection closed")
 
 async def process_commands():
     while True:
@@ -102,6 +106,4 @@ def start_web_server(queue_ref):
     #matrix = matrix_ref  # ✅ Assign shared matrix
 
     # Start the FastAPI server
-    config = uvicorn.Config(app, host="0.0.0.0", port=8000, log_level="info")
-    server = uvicorn.Server(config)
-    asyncio.run(server.serve())  # Use asyncio.run to execute the async server
+    asyncio.run(uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info"))

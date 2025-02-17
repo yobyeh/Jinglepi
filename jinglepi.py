@@ -89,7 +89,7 @@ def handle_stop_button():
 async def send_websocket_message(data):
     """ Send data to the web server via WebSocket. """
     try:
-        async with websockets.connect("ws://localhost:8000/ws") as websocket:
+        async with websocket.connect("ws://localhost:8000/ws") as websocket:
             await websocket.send(json.dumps(data))
             response = await websocket.recv()
             print("WebSocket Response:", response)
