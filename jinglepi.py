@@ -8,6 +8,10 @@ import asyncio
 import html
 import uvicorn
 import json
+import time
+import board
+import neopixel_spi as neopixel
+
 
 #hardcoded matrix size
 #data lock all shared files
@@ -15,13 +19,23 @@ import json
 #persistant settings file between launches
 
 #matrix size
-#columns = 16
-#rows = 50
-#pixels = 800
+running = 0
+runcount = 0
 
 columns = 1
 rows = 50
-pixels = 50
+
+NUM_PIXELS = 50
+PIXEL_ORDER = neopixel.GRB
+COLORS = (0xFF0000, 0xFFFF00, 0x00FF00, 0x00FFFF, 0x0000FF, 0xFF00FF)
+DELAY = 0.2
+
+spi = board.SPI()
+
+pixels = neopixel.NeoPixel_SPI(spi,
+                                NUM_PIXELS,
+                                pixel_order=PIXEL_ORDER,
+                                auto_write=False)
 
 
 
@@ -52,11 +66,7 @@ def update_Matrix(x: int, y: int, value: int):
     if 0 <= x < rows and 0 <= y < columns:
         with lock:
             matrix[x][y] = value
-
-
-def run_frame():
-    colorWipe()
-        
+          
 def reset_frame_check():
     global frame_number
     if frame_number == 800:
@@ -68,13 +78,13 @@ def solid_color_matrix(color: str):
         for y in range(rows):
             update_Matrix(y, x, color_picked)
 
-def colorWipe():
-    """Wipe color across display a pixel at a time."""
-    for i in range(pixels):
-        for j in range(columns):
-            for k in range(rowsf):
-                update_Matrix(x, y, color_picked)
-                matrix_to_site(matrix)
+#def colorWipe():
+#    """Wipe color across display a pixel at a time."""
+#    for i in range(pixels):
+#        for j in range(columns):
+#            for k in range(rowsf):
+#                update_Matrix(x, y, color_picked)
+#                matrix_to_site(matrix)
                 
 
 #simulate LED update
@@ -83,13 +93,46 @@ def update_color_picked(color: str):
     color_picked = color  # Update the shared variable
     #print(f"LED color updated to: {current_led_color}")  # Debug: Log the updated color
 
+def wipe():
+    global runcount
+
+    if runcount == 0:
+        print("wipe red")
+        color_wipe(0xFF0000)  # Red
+        runcount += 1
+    elif runcount == 1:
+        print("wipe green")
+        color_wipe(0x00FF00)  # Green
+        runcount += 1
+    elif runcount == 2:
+        print("wipe blue")
+        color_wipe(0x0000FF)  # Blue
+        runcount = 0
+    
+
+
+def color_wipe(color, delay=DELAY):
+    """Move a color down the LED strip one by one."""
+    pixels.fill(0)  # Turn off all LEDs
+    for i in range(NUM_PIXELS):
+        pixels[i] = color  # Set the current LED to the color
+        pixels.show()
+        time.sleep(delay)
+
+
 #run matrix test animation
 def handle_test1_button():
+    global running
     print("test button 1 main file")
 
+    if running == 0:
+        running = 1
+    else:
+        running = 0
+
 def handle_stop_button():
-    print("stop button in main file")
     global running
+    print("stop button in main file")
     running = 0
 
 async def send_websocket_message(data):
@@ -125,10 +168,17 @@ async def process_commands():
 
 async def main_loop():
     global current_led_color  # Access the shared variable
-    global frame_number
+    global running  # ✅ Use the global variable instead of creating a new one
+    global runcount
+
     while True:
        
         print("main loop running")
+        if running == 1:
+            wipe()
+        else:
+            runcount = 0
+
         #run frame
         #run_frame()
         #reset_frame_check()
@@ -136,6 +186,8 @@ async def main_loop():
 
         # Simulate some processing
         await asyncio.sleep(5)
+
+    pi.stop()
 
 if __name__ == "__main__":
     async def main():
