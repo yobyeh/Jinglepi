@@ -15,9 +15,15 @@ import json
 #persistant settings file between launches
 
 #matrix size
-columns = 16
+#columns = 16
+#rows = 50
+#pixels = 800
+
+columns = 1
 rows = 50
-pixels = 800
+pixels = 50
+
+
 
 lock = threading.Lock()
 #shared variables
@@ -26,15 +32,15 @@ lock = threading.Lock()
 color_picked = "#000000"  # Default color
 
 #frame logic
-frame_loaded = 0
-frame_sent_web = 0
-frame_sent_led = 0
-running = 0
-frame_number = 0
+#frame_loaded = 0
+#frame_sent_web = 0
+#frame_sent_led = 0
+#running = 0
+#frame_number = 0
 
 #server
 # Define command queue globally
-command_queue = queue.Queue()#create matrix
+command_queue = queue.Queue()
 matrix = [[0 for _ in range(columns)] for _ in range(rows)]
 
 

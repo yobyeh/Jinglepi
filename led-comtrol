@@ -1,0 +1,11 @@
+import time
+import board
+import neopixel
+
+# Use SPI mode (connect LED data pin to GPIO 10 / SPI MOSI)
+pixels = neopixel.NeoPixel(board.SPI(), 50, brightness=0.5, auto_write=False, pixel_order=neopixel.GRB)
+
+for i in range(50):
+    pixels[i] = (255, 0, 0)  # Red
+    pixels.show()
+    time.sleep(0.05)
