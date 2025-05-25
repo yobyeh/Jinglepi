@@ -27,8 +27,34 @@ async def get_index():
         return HTMLResponse("<h1>Error: index.html not found</h1>", status_code=404)
 
 #read program page
+@app.get("/program.html")
+async def get_settings():
+    try:
+        with open("web-control/program.html", "r") as f:
+            html_content = f.read()
+        return HTMLResponse(html_content)
+    except FileNotFoundError:
+        return HTMLResponse("<h1>Error: program.html not found</h1>", status_code=404)
 
 #read settings page
+@app.get("/settings.html")
+async def get_settings():
+    try:
+        with open("web-control/settings.html", "r") as f:
+            html_content = f.read()
+        return HTMLResponse(html_content)
+    except FileNotFoundError:
+        return HTMLResponse("<h1>Error: settings.html not found</h1>", status_code=404)
+    
+#read updoad page
+@app.get("/upload.html")
+async def get_settings():
+    try:
+        with open("web-control/upload.html", "r") as f:
+            html_content = f.read()
+        return HTMLResponse(html_content)
+    except FileNotFoundError:
+        return HTMLResponse("<h1>Error: upload.html not found</h1>", status_code=404)
 
 # ✅ Function to handle all button logic
 async def handle_button(button_id):
@@ -37,8 +63,7 @@ async def handle_button(button_id):
     button_actions = {
         "test1Button": test1_button_logic,
         "stopButton": handle_stop_button,
-        "colorButton": change_led_color,
-        "resetButton": reset_leds
+        
     }
 
     # Execute the correct function
