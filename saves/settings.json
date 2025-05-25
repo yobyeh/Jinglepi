@@ -1,0 +1,7 @@
+{
+  "brightness": 128,
+  "default_color": "#00FF00",
+  "animation": "wipe",
+  "auto_start": true,
+  "wipe_speed": 0.05
+}
