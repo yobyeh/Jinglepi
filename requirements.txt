@@ -2,3 +2,5 @@ fastapi
 uvicorn[standard]
 adafruit-circuitpython-neopixel-spi
 python-multipart
+Pillow
+opencv-python
