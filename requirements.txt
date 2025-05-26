@@ -1,3 +1,4 @@
 fastapi
 uvicorn[standard]
 adafruit-circuitpython-neopixel-spi
+python-multipart

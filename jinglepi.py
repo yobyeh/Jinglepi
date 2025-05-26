@@ -3,8 +3,9 @@ import queue
 from fastapi import FastAPI, WebSocket
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
-from web_server import start_web_server
+from web_server import app, start_web_server, conversion_queue
 from led_controller import start_led_controller
+from conversion_worker import start_converter_thread
 import asyncio
 import uvicorn
 import json
@@ -16,20 +17,12 @@ import time
 #hardcoded matrix size
 #data lock all shared files
 #create matrix function
-#persistant settings file between launches
+#persistant settings file between launches lock file file for multiple threads
 
 lock = threading.Lock()
 #shared variables
 #with lock used for editing shared variables
 # Shared variable for LED color
-color_picked = "#000000"  # Default color
-
-#frame logic
-#frame_loaded = 0
-#frame_sent_web = 0
-#frame_sent_led = 0
-#running = 0
-#frame_number = 0
 
 #server
 # Define command queue globally
@@ -78,6 +71,8 @@ if __name__ == "__main__":
         # Start LED controller
         led_thread = threading.Thread(target=start_led_controller, args=(command_queue,), daemon=True)
         led_thread.start()
+
+        start_converter_thread(conversion_queue)
 
         # Start processing commands in the main thread
         asyncio.create_task(process_commands())

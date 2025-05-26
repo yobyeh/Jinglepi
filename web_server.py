@@ -1,11 +1,12 @@
-from fastapi import FastAPI, WebSocket
-from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
+from fastapi import FastAPI, WebSocket, UploadFile, File # type: ignore
+from fastapi.responses import HTMLResponse, JSONResponse # type: ignore
+from fastapi.staticfiles import StaticFiles # type: ignore
+import os
 import threading
 import asyncio
 import queue
 import html
-import uvicorn
+import uvicorn # type: ignore
 import json
 
 app = FastAPI()
@@ -14,6 +15,68 @@ app.mount("/web-control/assets", StaticFiles(directory="web-control/assets"), na
 command_queue = None  # This will be set when web server starts
 matrix = None  # Shared matrix reference
 lock = threading.Lock()  # Ensure thread safety when modifying the matrix
+
+#uploading files
+UPLOAD_DIR = "uploaded_files"
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+#test
+print("Current working directory:", os.getcwd())
+
+
+@app.post("/upload")
+async def upload_file(file: UploadFile = File(...)):
+    #file type checking
+    #if not file.filename.lower().endswith((".json", ".txt", ".csv")):
+        #return JSONResponse(status_code=400, content={"message": "Only .json, .txt, or .csv files allowed."})
+
+    file_path = os.path.join(UPLOAD_DIR, file.filename)
+
+    with open(file_path, "wb") as f:
+        content = await file.read()
+        f.write(content)
+
+    print(f"✅ File uploaded: {file.filename}")
+    return {"message": f"File '{file.filename}' uploaded successfully!"}
+
+@app.get("/list_uploads")
+def list_uploads():
+    try:
+        files = os.listdir("uploaded_files")
+        return [f for f in files if not f.startswith(".")]
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"message": "Error listing files."})
+
+
+#convering files to color maps
+conversion_queue = queue.Queue()
+
+@app.post("/convert_file")
+async def convert_file(payload: dict):
+    filename = payload.get("filename")
+    grid_size = payload.get("grid_size")
+
+    if not filename or not grid_size or "x" not in grid_size:
+        return {"message": "❌ Invalid request."}
+
+    try:
+        rows, cols = map(int, grid_size.lower().split("x"))
+    except ValueError:
+        return {"message": "❌ Invalid grid size format."}
+
+    # Ensure file exists
+    source_path = os.path.join("uploaded_files", filename)
+    if not os.path.exists(source_path):
+        return {"message": f"❌ File not found: {filename}"}
+
+    # Queue the job
+    conversion_queue.put({
+        "filename": filename,
+        "path": source_path,
+        "rows": rows,
+        "cols": cols
+    })
+
+    return {"message": f"⏳ Conversion started for {filename} at {rows}x{cols}"}
 
 #main page
 @app.get("/")
@@ -28,7 +91,7 @@ async def get_index():
 
 #read program page
 @app.get("/program.html")
-async def get_settings():
+async def get_program():
     try:
         with open("web-control/program.html", "r") as f:
             html_content = f.read()
@@ -48,7 +111,7 @@ async def get_settings():
     
 #read updoad page
 @app.get("/upload.html")
-async def get_settings():
+async def get_upload():
     try:
         with open("web-control/upload.html", "r") as f:
             html_content = f.read()
