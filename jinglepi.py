@@ -18,6 +18,8 @@ import time
 #data lock all shared files
 #create matrix function
 #persistant settings file between launches lock file file for multiple threads
+#conversion thread always running 
+
 
 lock = threading.Lock()
 #shared variables
